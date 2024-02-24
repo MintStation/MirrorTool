@@ -1,5 +1,7 @@
 # MirrorTool
 
+<img src="https://github.com/MintStation/Mint-Documentation/blob/master/assets/mirrortool_logo.svg"/>
+
 A tool for moving PRs from one repository to another. It is similar to this [yogstation13/MirrorBot](https://github.com/yogstation13/MirrorBot), but unlike it, it doesn't require constant work to track changes, but simply moves the PR from some date.
 
 # Installation
