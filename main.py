@@ -62,8 +62,8 @@ else:
 		sys.exit()
 
 	print("Extracting closed pull requests from the source repository.")
-	upstream_pulls_requests = upstream.get_pulls(state="closed")
-	downstream_pulls_requests = downstream.get_pulls()
+	upstream_pulls_requests = upstream.get_pulls(state="closed", sort='created', direction='desc')
+	downstream_pulls_requests = downstream.get_pulls(sort='created', direction='desc')
 
 	if downstream_pulls_requests.totalCount == 0:
 		for pull_request in upstream_pulls_requests:
