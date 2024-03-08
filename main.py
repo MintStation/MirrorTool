@@ -6,6 +6,11 @@ import mirror
 import sys, os
 import subprocess
 
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+RESET = "\033[0m"
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--manual", type=int, help="Manually mirror PRs from the specified repository without conditions."),
 args = parser.parse_args()
@@ -47,10 +52,28 @@ if not os.path.isdir(config.local_repo_directory):
 		print("An error occured during cloning.")
 		sys.exit()
 
+print("Extracting closed pull requests from the source repository.")
+upstream_pulls_requests = upstream.get_pulls(state='closed', sort='created', direction='asc')
+downstream_pulls_requests = downstream.get_pulls(sort='all', direction='asc')
+
 if args.manual is not None:
 	print(f"Manual extraction PR {args.manual}")
-	result = mirror.mirror_pr(upstream, downstream, args.manual)
+	#result = mirror.mirror_pr(upstream, downstream, args.manual)
 	upstream_pull_request = upstream.get_pull(args.manual)
+	downstream_pr_exist = False
+	if downstream_pulls_requests.totalCount == 0:
+		result = mirror.mirror_pr(upstream, downstream, args.manual)
+		sys.exit()
+	else:
+		for downstream_pr in downstream_pulls_requests:
+			if f"{config.mirror_pr_title_prefix}{upstream_pull_request.title} - {upstream_pull_request.number}" == downstream_pr.title:
+				print(RED + f"Pull request #{args.manual} already exists in the target repository" + RESET)
+				downstream_pr_exist = True
+				sys.exit()
+		if downstream_pr_exist != True:
+			print(YELLOW + f"Create Pull-request #{args.manual} in the target repository" + RESET)
+			result = mirror.mirror_pr(upstream, downstream, args.manual)
+			sys.exit()
 
 else:
 	if config.end_date:
@@ -60,10 +83,6 @@ else:
 	else:
 		print("There is no end date in the configuration.")
 		sys.exit()
-
-	print("Extracting closed pull requests from the source repository.")
-	upstream_pulls_requests = upstream.get_pulls(state="closed", sort='created', direction='desc')
-	downstream_pulls_requests = downstream.get_pulls(sort='created', direction='desc')
 
 	if downstream_pulls_requests.totalCount == 0:
 		for pull_request in upstream_pulls_requests:
@@ -77,11 +96,10 @@ else:
 			print(f"Processing a combined pull request #{pull_request.number}")
 			downstream_pr_exist = False	
 			for downstream_pr in downstream_pulls_requests:
-				if f"{config.mirror_pr_title_prefix}{pull_request.title} - {pull_request.number}" in downstream_pr.title:
-					print(f"Pull request #{pull_request.number} already exists in the target repository")
+				if f"{config.mirror_pr_title_prefix}{pull_request.title} - {pull_request.number}" == downstream_pr.title:
+					print(RED + f"Pull request #{pull_request.number} already exists in the target repository" + RESET)
 					downstream_pr_exist = True
 					break
 			if downstream_pr_exist != True:
-				print(f"Pull-запрос #{pull_request.number} отсутствует в целевом репозитории")
-				print(f"Create Pull-request #{pull_request.number} in the target repository")
+				print(YELLOW + f"Create Pull-request #{pull_request.number} in the target repository" + RESET)
 				result = mirror.mirror_pr(upstream, downstream, pull_request.number)
